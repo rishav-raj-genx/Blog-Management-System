@@ -18,7 +18,7 @@ A full-stack (MERN) monorepo application for managing blog posts. It features us
 ## Team Members
 **Team 15**
 - **TL:** Rishav Raj - 67
-- **Members:** TBD
+- **Members:** Rewas Khatri , Sagar Kumar , Divyansh Gupta
 
 ## Setup Instructions
 
