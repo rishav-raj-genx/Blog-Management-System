@@ -82,3 +82,9 @@ VITE_API_URL=http://localhost:5000/api
 ## Deployment Links
 - **Frontend (Vercel):** *[Link Pending]*
 - **Backend (Render/Railway):** *[Link Pending]*
+
+## Project Documentation
+
+- [Contributing Guide](./CONTRIBUTING.md)
+- [Project Rules](./RULES.md)
+- [AI Usage Policy](./AI_USAGE.md)
