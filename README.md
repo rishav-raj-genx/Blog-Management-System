@@ -56,6 +56,10 @@ MONGO_URI=your_mongodb_atlas_connection
 JWT_SECRET=your_secret
 ```
 
+The backend will refuse to start when `MONGO_URI` or `JWT_SECRET` is missing.
+Copy `backend/.env.example` to `backend/.env` and set both values before
+running the API.
+
 ### Frontend (`frontend/.env`)
 ```
 VITE_API_URL=http://localhost:5000/api
