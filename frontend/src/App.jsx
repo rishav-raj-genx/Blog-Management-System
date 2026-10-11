@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getCurrentUserApi, getPostsApi } from './api.js'
 import AdminDashboard from './components/AdminDashboard.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
+import CreatePost from './pages/CreatePost.jsx'
+import EditPost from './pages/EditPost.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import './App.css'
@@ -175,6 +178,9 @@ export default function App() {
 
   const isAdmin = currentUser?.role?.toLowerCase() === 'admin'
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
+  const isCreatePostPage = location.pathname === '/create-post'
+  const isEditPostPage = location.pathname.startsWith('/edit-post/')
+  const isDashboardPage = location.pathname === '/dashboard'
 
   return (
     <div className="app-container">
@@ -191,8 +197,20 @@ export default function App() {
       <main className="app-main">
         {isAuthPage ? (
           location.pathname === '/login' ? <Login /> : <Register />
+        ) : isCreatePostPage ? (
+          <ProtectedRoute><CreatePost /></ProtectedRoute>
+        ) : isEditPostPage ? (
+          <ProtectedRoute><EditPost /></ProtectedRoute>
+        ) : isDashboardPage && isAuthChecking ? (
+          <div className="state-box"><p>Checking authentication...</p></div>
+        ) : isDashboardPage && currentUser && isAdmin ? (
+          <AdminDashboard onError={handleAlertError} onSuccess={(message) => showAlert(message, 'success')} />
+        ) : isDashboardPage && currentUser ? (
+          <div className="access-denied-box"><h2>Access Denied</h2><p>You must have administrator privileges to view the dashboard.</p><button type="button" className="btn btn-primary" onClick={handleLogout}>Sign Out</button></div>
+        ) : isDashboardPage ? (
+          <ProtectedRoute><div className="state-box"><p>Checking authentication...</p></div></ProtectedRoute>
         ) : isAuthChecking ? <div className="state-box"><p>Checking authentication...</p></div>
-          : currentUser && isAdmin ? <AdminDashboard onError={handleAlertError} onSuccess={(message) => showAlert(message, 'success')} />
+          : currentUser && isAdmin ? <PublicFeed onLogin={() => navigate('/dashboard')} />
             : currentUser ? <div className="access-denied-box"><h2>Access Denied</h2><p>You must have administrator privileges to view the dashboard.</p><button type="button" className="btn btn-primary" onClick={handleLogout}>Sign Out</button></div>
               : <PublicFeed onLogin={() => navigate('/login')} />}
       </main>
