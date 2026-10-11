@@ -8,7 +8,7 @@ function isValidId(id) {
 }
 
 function canManagePost(req, post) {
-  return req.user.role === 'admin' || post.author._id.toString() === req.user.id
+  return req.user.role === 'Admin' || post.author._id.toString() === req.user.id
 }
 
 export async function createPost(req, res, next) {
