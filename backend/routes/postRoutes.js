@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate } from '../middleware/auth.js'
+import { authenticateUser } from '../middleware/auth.js'
 import {
   createPost,
   deletePost,
@@ -10,10 +10,10 @@ import {
 
 const router = Router()
 
-router.post('/', authenticate, createPost)
+router.post('/', authenticateUser, createPost)
 router.get('/', getPosts)
 router.get('/:id', getPost)
-router.put('/:id', authenticate, updatePost)
-router.delete('/:id', authenticate, deletePost)
+router.put('/:id', authenticateUser, updatePost)
+router.delete('/:id', authenticateUser, deletePost)
 
 export default router
