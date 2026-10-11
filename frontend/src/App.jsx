@@ -1,122 +1,175 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { getCurrentUserApi } from './api.js'
+import LoginForm from './components/LoginForm.jsx'
+import AdminDashboard from './components/AdminDashboard.jsx'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [currentUser, setCurrentUser] = useState(null)
+  const [isAuthChecking, setIsAuthChecking] = useState(true)
+  const [alert, setAlert] = useState(null)
+  const alertTimerRef = useRef(null)
+
+  const showAlert = useCallback((message, type = 'error') => {
+    if (!message) return
+
+    if (alertTimerRef.current) {
+      clearTimeout(alertTimerRef.current)
+      alertTimerRef.current = null
+    }
+
+    setAlert({ message, type })
+
+    alertTimerRef.current = setTimeout(() => {
+      setAlert(null)
+      alertTimerRef.current = null
+    }, 4000)
+  }, [])
+
+  const handleDismissAlert = useCallback(() => {
+    if (alertTimerRef.current) {
+      clearTimeout(alertTimerRef.current)
+      alertTimerRef.current = null
+    }
+    setAlert(null)
+  }, [])
+
+  const handleAlertError = useCallback((message) => {
+    if (!localStorage.getItem('token')) {
+      setCurrentUser((prev) => (prev ? null : prev))
+    }
+    showAlert(message, 'error')
+  }, [showAlert])
+
+  const handleAlertSuccess = useCallback((message) => {
+    showAlert(message, 'success')
+  }, [showAlert])
+
+  const handleLoginSuccess = useCallback((user) => {
+    setCurrentUser(user)
+    showAlert(`Welcome, ${user.name || 'User'}!`, 'success')
+  }, [showAlert])
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('token')
+    setCurrentUser(null)
+    showAlert('Logged out successfully.', 'success')
+  }, [showAlert])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function checkAuth() {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        if (isMounted) setIsAuthChecking(false)
+        return
+      }
+
+      try {
+        const user = await getCurrentUserApi()
+        if (isMounted) {
+          setCurrentUser(user)
+        }
+      } catch (err) {
+        localStorage.removeItem('token')
+        if (isMounted) {
+          setCurrentUser(null)
+          if (err?.message) {
+            showAlert(err.message, 'error')
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setIsAuthChecking(false)
+        }
+      }
+    }
+
+    checkAuth()
+
+    return () => {
+      isMounted = false
+      if (alertTimerRef.current) {
+        clearTimeout(alertTimerRef.current)
+        alertTimerRef.current = null
+      }
+    }
+  }, [showAlert])
+
+  const isAdmin = currentUser?.role?.toLowerCase() === 'admin'
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-container">
+      <header className="app-header">
+        <h1 className="app-title">Blog Management</h1>
 
-      <div className="ticks"></div>
+        {currentUser && (
+          <div className="user-bar">
+            <span className="user-label">
+              {currentUser.name} (<strong>{currentUser.role}</strong>)
+            </span>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleLogout}
+            >
+              Log Out
+            </button>
+          </div>
+        )}
+      </header>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {alert && (
+        <div className={`alert-banner alert-${alert.type}`} role="alert">
+          <span>{alert.message}</span>
+          <button
+            type="button"
+            className="alert-close"
+            onClick={handleDismissAlert}
+            aria-label="Dismiss alert"
+          >
+            ✕
+          </button>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <main className="app-main">
+        {isAuthChecking ? (
+          <div className="state-box">
+            <p>Checking authentication...</p>
+          </div>
+        ) : !currentUser ? (
+          <LoginForm
+            onLoginSuccess={handleLoginSuccess}
+            onError={handleAlertError}
+          />
+        ) : !isAdmin ? (
+          <div className="access-denied-box">
+            <h2>Access Denied</h2>
+            <p>You must have administrator privileges to view the dashboard.</p>
+            <p className="access-note">
+              Signed in as <strong>{currentUser.email}</strong> (role: <code>{currentUser.role}</code>).
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleLogout}
+            >
+              Sign In as Administrator
+            </button>
+          </div>
+        ) : (
+          <AdminDashboard
+            onError={handleAlertError}
+            onSuccess={handleAlertSuccess}
+          />
+        )}
+      </main>
+
+      <footer className="app-footer">
+        <p>Blog Management System &bull; College Assignment</p>
+      </footer>
+    </div>
   )
 }
-
-export default App
